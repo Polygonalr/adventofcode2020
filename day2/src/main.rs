@@ -17,21 +17,21 @@ fn main() {
 				
 				// (Part 1) Analysis of each password
 				let password = s1[1];
-                let c = password.matches(policy_char).count();
-                if c >= min_count && c <= max_count {
-                    validcount_p1 += 1;
-                }
+				let c = password.matches(policy_char).count();
+				if c >= min_count && c <= max_count {
+				    validcount_p1 += 1;
+				}
 
-                // (Part 2) Analysis of each password
-                // Not sure why chars().nth() is 1-index not 0-index
-                if (password.chars().nth(min_count).unwrap() == policy_char && password.chars().nth(max_count).unwrap() != policy_char)
-                    || (password.chars().nth(min_count).unwrap() != policy_char && password.chars().nth(max_count).unwrap() == policy_char) {
-                    validcount_p2 += 1;
-                }
+				// (Part 2) Analysis of each password
+				// Not sure why chars().nth() is 1-index not 0-index
+				if (password.chars().nth(min_count).unwrap() == policy_char && password.chars().nth(max_count).unwrap() != policy_char)
+				    || (password.chars().nth(min_count).unwrap() != policy_char && password.chars().nth(max_count).unwrap() == policy_char) {
+						validcount_p2 += 1;
+				}
 			}
 		}
 	}
-    println!("Part 1: {}\nPart 2: {}", validcount_p1, validcount_p2);
+	println!("Part 1: {}\nPart 2: {}", validcount_p1, validcount_p2);
 }
 
 // Reusable function to read files
