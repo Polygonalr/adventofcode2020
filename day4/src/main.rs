@@ -3,6 +3,7 @@ use std::io::{self, BufRead};
 use std::path::Path;
 use std::error;
 use std::collections::HashMap;
+use regex::Regex;
 
 #[derive(Eq, PartialEq, Hash)]
 enum AttrType {
@@ -39,7 +40,7 @@ fn check_passport_p2(passport_str: &str) -> bool {
     // Initialization of the HashMap to record down the attributes satisfied
     let mut attr_check: HashMap<AttrType, bool> = HashMap::new();
     let init_tup_vec = ["byr", "iyr", "eyr", "hgt", "hcl" ,"ecl", "pid"];
-    for attr in init_tup_vec {
+    for attr in init_tup_vec.iter() {
         let temp: AttrType = attr.parse().unwrap();
         attr_check.insert(temp, false);
     }
@@ -67,7 +68,30 @@ fn check_passport_p2(passport_str: &str) -> bool {
         if !x.ends_with("in") && !x.ends_with("cm") {
             return false;
         }
-    }; 
+        let mut chars = x.chars(); // Converts to iterator of chars
+        chars.nth_back(1); // remove last 2 chars
+        let new_str = chars.as_str();  // Convert back to str
+        if let Ok(num_val) = new_str.parse::<i32>() {
+            if x.ends_with("cm") && num_val >= 150 && num_val <= 193 {
+                return true;
+            } else if x.ends_with("in") && num_val >= 59 && num_val <= 76 {
+                return true;
+            }
+        }
+        false
+    };
+    let check_hcl = |x: &str| -> bool {
+        let re = Regex::new(r"^(#[0-9a-f]{6})$").unwrap();
+        return re.is_match(x);
+    };
+    let check_ecl = |x: &str| -> bool {
+        let re = Regex::new(r"^((amb)|(blu)|(brn)|(gry)|(grn)|(hzl)|(oth))$").unwrap();
+        return re.is_match(x);
+    };
+    let check_pid = |x: &str| -> bool {
+        let re = Regex::new(r"^[0-9]{9}$").unwrap();
+        return re.is_match(x);
+    };
 
     // Look through attrs and record down attributes satisfied
     for attr in attrs {
@@ -76,19 +100,19 @@ fn check_passport_p2(passport_str: &str) -> bool {
             continue;
         }
         let attr_enum: AttrType = attr_str[0].parse().unwrap();
-        let satisfy:bool = match attr_enum {
+        let satisfy: bool = match attr_enum {
             AttrType::Byr => check_byr(attr_str[1].parse::<i32>().unwrap()),
             AttrType::Iyr => check_iyr(attr_str[1].parse::<i32>().unwrap()),
             AttrType::Eyr => check_eyr(attr_str[1].parse::<i32>().unwrap()),
-            AttrType::Hgt => true,
-            AttrType::Hcl => true,
-            AttrType::Ecl => true,
-            AttrType::Pid => true,
-            _ => false
-            };
+            AttrType::Hgt => check_hgt(attr_str[1]),
+            AttrType::Hcl => check_hcl(attr_str[1]),
+            AttrType::Ecl => check_ecl(attr_str[1]),
+            AttrType::Pid => check_pid(attr_str[1]),
+            AttrType::Cid => true
+        };
 
 
-        attr_check.insert(attr_enum,  satisfy);
+        attr_check.insert(attr_enum, satisfy);
     }
 
     // Look through attr_check and see whether there's any unsatisfied attributes
@@ -108,7 +132,7 @@ fn check_passport_p1(passport_str: &str) -> bool {
     // Initialization of the HashMap to record down the attributes satisfied
     let mut attr_check: HashMap<AttrType, bool> = HashMap::new();
     let init_tup_vec = ["byr", "iyr", "eyr", "hgt", "hcl" ,"ecl", "pid"];
-    for attr in init_tup_vec {
+    for attr in init_tup_vec.iter() {
         let temp: AttrType = attr.parse().unwrap();
         attr_check.insert(temp, false);
     }
@@ -147,6 +171,9 @@ fn main() {
                     if check_passport_p1(&passport_str_buf) { 
                         counter_p1 += 1;
                     }
+                    if check_passport_p2(&passport_str_buf) {
+                        counter_p2 += 1;
+                    }
                     passport_str_buf = "".to_owned();
                 }
 
@@ -162,7 +189,10 @@ fn main() {
     if check_passport_p1(&passport_str_buf) {
        counter_p1 += 1;
     }
-    println!("Part 1: {}", counter_p1);
+    if check_passport_p2(&passport_str_buf) {
+        counter_p2 += 1;
+    }
+    println!("Part 1: {}\nPart 2: {}", counter_p1, counter_p2);
 
 }
 
